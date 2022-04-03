@@ -14,16 +14,87 @@ From TidyTuesday
 URL:https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-07-07
 
 
-```{r}
+```{r }
 coffee_ratings <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-07/coffee_ratings.csv')
 
 ```
+# Quick overview #
 
 ```{r}
 summary(coffee_ratings)
 ```
 >A few NA's.
 
->1 within quakers
+>1 within quakers, and 230 in Altitude low/high/mean
 
->230 ins Altitude low/high/mean
+> Check what is happening in the rest of the data set
+
+# Count of NA's per coloumn#
+```{r}
+apply(X=is.na(coffee_ratings), MARGIN = 2, FUN = sum)
+```
+> I will be just removing some of the columns with many missing vlaues, for instance farm_name.
+
+```{r}
+library(tidyverse)
+```
+
+Removal of columns
+```{r}
+coffee = coffee_ratings%>%
+  select(-farm_name,-lot_number,-mill,-ico_number,-altitude,
+         -altitude_low_meters,-altitude_high_meters,-producer,-company,
+         -expiration,-certification_address,-owner_1,-grading_date)
+apply(X=is.na(coffee), MARGIN = 2, FUN = sum)
+view(coffee)
+```
+
+
+```{r}
+try = na.omit(coffee)
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+#df only na's
+NAs=coffee_ratings%>%
+  select(everything())%>%
+  filter(is.na(quakers | altitude_mean_meters | altitude_high_meters | altitude_low_meters))
+#take a look at missing values within rows
+NAs
+
+```
+
+```{r}
+#df with no na's
+coffee=coffee_ratings%>%
+  select(everything())%>%
+  filter((!is.na(quakers | altitude_mean_meters | altitude_high_meters | altitude_low_meters)))
+```
+
+```{r}
+old = count(coffee_ratings)
+new = count(coffee)
+removed = old - new
+pct.Kept = new / old  
+pct.Removed = removed / old 
+print(c(old,new,removed,pct.Kept,pct.Removed))
+```
+I would prefer to have less removed, but this captures at least 80% of the coffee rating data.
+If the altitude does not show to have an effect on the coffee rating, then the removal of the altitude columns from the  original data will be done. Then re-running analyis on this set will occur at that time.
+
+
+```{r}
+coffee
+```
+
+
+
