@@ -1,0 +1,29 @@
+---
+title: "Project"
+author: "SeanJ- Volcaetus"
+date: "4/3/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data  ##
+From TidyTuesday
+URL:https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-07-07
+
+
+```{r}
+coffee_ratings <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-07/coffee_ratings.csv')
+
+```
+
+```{r}
+summary(coffee_ratings)
+```
+>A few NA's.
+
+>1 within quakers
+
+>230 ins Altitude low/high/mean
