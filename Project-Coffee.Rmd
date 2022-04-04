@@ -44,57 +44,96 @@ Removal of columns
 coffee = coffee_ratings%>%
   select(-farm_name,-lot_number,-mill,-ico_number,-altitude,
          -altitude_low_meters,-altitude_high_meters,-producer,-company,
-         -expiration,-certification_address,-owner_1,-grading_date)
+         -expiration,-certification_address,-owner_1,-grading_date,
+         -certification_contact,-unit_of_measurement)
 apply(X=is.na(coffee), MARGIN = 2, FUN = sum)
-view(coffee)
+#view(coffee)
 ```
 
 
 ```{r}
-try = na.omit(coffee)
-```
-
-
-
-
-
-
-
-
-
-
-```{r}
-#df only na's
-NAs=coffee_ratings%>%
-  select(everything())%>%
-  filter(is.na(quakers | altitude_mean_meters | altitude_high_meters | altitude_low_meters))
-#take a look at missing values within rows
-NAs
-
+coffee = na.omit(coffee)
+#view(coffee)
 ```
 
 ```{r}
-#df with no na's
-coffee=coffee_ratings%>%
-  select(everything())%>%
-  filter((!is.na(quakers | altitude_mean_meters | altitude_high_meters | altitude_low_meters)))
+coffee[grep("lbs",coffee$bag_weight),]
 ```
 
 ```{r}
-old = count(coffee_ratings)
-new = count(coffee)
-removed = old - new
-pct.Kept = new / old  
-pct.Removed = removed / old 
-print(c(old,new,removed,pct.Kept,pct.Removed))
+coffee = separate(data = coffee, col = bag_weight, into = c("weight", "type"), sep = " ")
 ```
-I would prefer to have less removed, but this captures at least 80% of the coffee rating data.
-If the altitude does not show to have an effect on the coffee rating, then the removal of the altitude columns from the  original data will be done. Then re-running analyis on this set will occur at that time.
+
+```{r}
+coffee$weight = as.numeric(coffee$weight)
+```
 
 
 ```{r}
-coffee
+for(i in 1:length(coffee)){
+  if(coffee[i,8]=="kg"){
+  coffee[i,7] = round(coffee[i,7] * 2.20462,0)
+  coffee[i,8] = "lbs"
+  }
+}  
+```
+
+```{r}
+coffee = coffee%>%
+  select(-type)
+```
+
+```{r}
+coffee = coffee%>%
+    rename(altitude_mean_feet=altitude_mean_meters)
+```
+
+```{r}
+coffee$altitude_mean_feet = round(coffee$altitude_mean_feet * 3.28084,0)
 ```
 
 
+```{r}
+coffee$harvest_year = substr(coffee$harvest_year,1,4)
+coffee$harvest_year = as.numeric(coffee$harvest_year)
+```
+
+```{r}
+summary(coffee[,c(9,12:24,26,28)])
+```
+
+```{r}
+library(ggplot2)
+```
+
+check for outliers in some of the fields
+
+```{r}
+defect1_plt = ggplot(coffee, aes(y=category_one_defects)) +
+              geom_boxplot()
+defect2_plt = ggplot(coffee, aes(y=category_two_defects)) +
+              geom_boxplot()
+alt_plt = ggplot(coffee, aes(y=altitude_mean_feet)) +
+              geom_boxplot()
+defect1_plt
+defect2_plt
+alt_plt
+```
+
+There are some outliers, but not that many that would result in a concern at this time.
+```{r}
+c = coffee[,c(1:2,4,10:26,28)]
+```
+
+```{r}
+c.v1 = c%>%pivot_longer(
+  cols = !c(species, country_of_origin,variety,processing_method,color),
+  names_to = "Variables",
+  values_to = "Counts")
+c.v1
+```
+```{r}
+g1 = ggplot(c.v1,aes(x=species,y=Counts,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
+g1
+```
 
