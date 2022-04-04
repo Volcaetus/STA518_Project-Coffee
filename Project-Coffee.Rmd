@@ -148,8 +148,7 @@ c.v2 = c.v1 %>%
 
 
 ```{r}
-g2 = ggplot(c.v2,aes(x=species,y=Counts,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
-g2
+ggplot(c.v2,aes(x=species,y=Counts,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
 ```
 How are the cup points distributed and where the weight it is at
 ```{r}
@@ -172,4 +171,86 @@ c.v2 %>%
   ggplot(aes(x=processing_method,y=Counts,color=color))+geom_violin()+
     facet_wrap(~processing_method,scales = "free")
 ```
+See the data make-up in a different view
+```{r}
+library(formattable)
+```
+
+```{r}
+#want to make this cleaner
+c.v1 %>%
+  group_by(Variables,Counts) %>%
+  summarise(count = n()) %>%
+  mutate(freq = formattable::percent(count / sum(count)))
+```
+
+Format the label (total_cup_points) to be categorical
+
+```{r}
+coffee$tcp = coffee$total_cup_points
+```
+
+```{r}
+for(i in 1:length(coffee)){
+  if(coffee[i,29] >= 80){
+    coffee[i,29] = 80
+  }
+  else if(coffee[i,29] >= 70 & coffee[i,29] < 80){
+    coffee[i,29] = 70
+  }
+  else if(coffee[i,29] >= 60 & coffee[i,29] < 70){
+    coffee[i,29] = 60
+  }
+  else{
+    coffee[i,29] = 50
+  }
+}
+coffee$tcp = round(coffee$tcp,0)
+```
+
+For analysis
+```{r}
+df = coffee[,2:29]
+```
+
+Accuracy table for comparison between models
+```{r}
+table_accuracy = matrix(nrow=6,ncol=1)
+colnames(table_accuracy) = c('Accuracy')
+rownames(table_accuracy) = c('DTree','NB','SVM-Linerar','SVM-Polynomial','ANN','KNN')
+table_accuracy
+```
+Set seed so analysis is repeatable
+```{r}
+set.seed(1)
+```
+
+Simple k-fold cross validation(cv) function
+```{r}
+cv = function(data,k){
+  n = nrow(data)
+  folds = k
+  tail = n%/%folds
+  
+  set.seed(1)
+  
+  rnd = runif(n)
+  rank = rank(rnd)
+  
+  #block/chunck from cv is blk
+  blk = (rank-1)%/%tail+1
+  blk = as.factor(blk)
+  
+  #to see formation of folds 
+  print(summary(blk))
+}
+
+```
+
+```{r}
+cv(df,10)
+```
+
+
+
 
