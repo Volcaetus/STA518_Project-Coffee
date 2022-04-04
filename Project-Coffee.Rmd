@@ -353,7 +353,8 @@ print(mean(all.acc))
 table_accuracy[4,1] = mean(all.acc)
 ```
 
-```
+```{r warning=FALSE}
+df$tcp = as.factor(df$tcp)
 #ann
 library(nnet)
 set.seed(1)
@@ -361,17 +362,40 @@ set.seed(1)
 all.acc = numeric(0)
 for(i in 1:folds){
   model = nnet(tcp~.,df[blk != i,], size = 5, trace=FALSE, wgts=.05)
-  pred = predict(model, df[blk==i,])
-  confMat = table(pred,df$tcp[blk==i])
-  acc = (confMat[1,1])/sum(confMat)
+  pred = predict(model, df[blk==i,],type="class")
+  confMat = table(factor(pred,levels=1:4),factor(df$tcp[blk==i],levels=1:4))
+  acc = (confMat[1,1]+confMat[2,2]+confMat[3,3]+confMat[4,4])/sum(confMat)
   all.acc = rbind(all.acc,acc)
 }
 print(mean(all.acc))
 table_accuracy[5,1] = mean(all.acc)
 ```
+There was an (un)interesting issue with NN table, as it was dropping the
+first two rows as it was not forward feeding into those nodes. The following
+is the work around to resolve this issue.
+
+#Before#
+```{r}
+set.seed(1)
+i=1
+  model = nnet(tcp~.,df[blk != i,], size = 5, trace=FALSE, wgts=.05)
+  pred = predict(model, df[blk==i,],type="class")
+  confMat = table(pred,df$tcp[blk==i])
+  confMat
+```
+#After#
+```{r}
+set.seed(1)
+i=1
+  model = nnet(tcp~.,df[blk != i,], size = 5, trace=FALSE, wgts=.05)
+  pred = predict(model, df[blk==i,],type="class")
+  confMat = table(factor(pred,levels=1:4),factor(df$tcp[blk==i],levels=1:4))
+  confMat
+```
 
 
 ```{r}
+df$tcp = as.factor(df$tcp)
 library (caret)
 trControl <- trainControl(method  = "cv", number  = 10)
 ```
