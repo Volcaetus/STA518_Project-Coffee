@@ -191,7 +191,7 @@ coffee$tcp = coffee$total_cup_points
 ```
 
 ```{r}
-for(i in 1:length(coffee)){
+for(i in 1:894){
   if(coffee[i,29] >= 80){
     coffee[i,29] = 80
   }
@@ -209,8 +209,11 @@ coffee$tcp = round(coffee$tcp,0)
 ```
 
 For analysis
-```{r}
-df = coffee[,2:29]
+```{r warning=FALSE}
+df = coffee[,c(9:22,25,29)]
+for(i in 4 : 13){
+  df[,i]=round(df[,i],0)
+}
 ```
 
 Accuracy table for comparison between models
@@ -226,7 +229,7 @@ set.seed(1)
 ```
 
 Simple k-fold cross validation(cv) function
-```{r}
+```
 cv = function(data,k){
   n = nrow(data)
   folds = k
@@ -244,11 +247,27 @@ cv = function(data,k){
   #to see formation of folds 
   print(summary(blk))
 }
-
 ```
 
 ```{r}
-cv(df,10)
+n = nrow(df)
+folds = 10
+tail = n%/%folds
+
+set.seed(1)
+
+rnd = runif(n)
+rank = rank(rnd)
+
+#block/chunck from cv is blk
+blk = (rank-1)%/%tail+1
+blk = as.factor(blk)
+
+#to see formation of folds 
+print(summary(blk))
+```
+```{r}
+df$tcp = as.factor(df$tcp)
 ```
 
 
