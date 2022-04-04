@@ -85,11 +85,11 @@ coffee = coffee%>%
 
 ```{r}
 coffee = coffee%>%
-    rename(altitude_mean_feet=altitude_mean_meters)
+    rename(avg_altitude=altitude_mean_meters)
 ```
 
 ```{r}
-coffee$altitude_mean_feet = round(coffee$altitude_mean_feet * 3.28084,0)
+coffee$avg_altitude = round(coffee$avg_altitude * 3.28084,0)
 ```
 
 
@@ -113,7 +113,7 @@ defect1_plt = ggplot(coffee, aes(y=category_one_defects)) +
               geom_boxplot()
 defect2_plt = ggplot(coffee, aes(y=category_two_defects)) +
               geom_boxplot()
-alt_plt = ggplot(coffee, aes(y=altitude_mean_feet)) +
+alt_plt = ggplot(coffee, aes(y=avg_altitude)) +
               geom_boxplot()
 defect1_plt
 defect2_plt
@@ -121,10 +121,13 @@ alt_plt
 ```
 
 There are some outliers, but not that many that would result in a concern at this time.
+
+Pick out some of the information that is not necessary at this point in exploration
 ```{r}
 c = coffee[,c(1:2,4,10:26,28)]
 ```
 
+Condense the data
 ```{r}
 c.v1 = c%>%pivot_longer(
   cols = !c(species, country_of_origin,variety,processing_method,color),
@@ -132,8 +135,41 @@ c.v1 = c%>%pivot_longer(
   values_to = "Counts")
 c.v1
 ```
+
+Plot the data to see overall behavior 
 ```{r}
-g1 = ggplot(c.v1,aes(x=species,y=Counts,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
-g1
+ggplot(c.v1,aes(x=species,y=Counts,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
+```
+Filter out the items that have known outliers
+```{r}
+c.v2 = c.v1 %>%
+  filter(Variables != 'avg_altitude' & Variables != 'category_one_defects'& Variables != 'category_two_defects')
+```
+
+
+```{r}
+g2 = ggplot(c.v2,aes(x=species,y=Counts,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
+g2
+```
+How are the cup points distributed and where the weight it is at
+```{r}
+c.v2 %>%
+  filter(Variables == 'total_cup_points')%>%
+  ggplot(aes(x=species,y=Counts,color=color))+geom_boxplot()
+
+c.v2 %>%
+  filter(Variables == 'total_cup_points')%>%
+  ggplot(aes(x=species,y=Counts,color=color))+geom_violin()
+```
+```{r warning=FALSE}
+c.v2 %>%
+  filter(Variables == 'total_cup_points')%>%
+  ggplot(aes(x=processing_method,y=Counts,color=color))+geom_boxplot()+
+    facet_wrap(~processing_method,scales = "free")
+
+c.v2 %>%
+  filter(Variables == 'total_cup_points')%>%
+  ggplot(aes(x=processing_method,y=Counts,color=color))+geom_violin()+
+    facet_wrap(~processing_method,scales = "free")
 ```
 
