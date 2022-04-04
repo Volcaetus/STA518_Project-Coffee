@@ -212,7 +212,7 @@ For analysis
 ```{r warning=FALSE}
 df = coffee[,c(9:22,25,29)]
 for(i in 4 : 13){
-  df[,i]=round(df[,i],0)
+  df[,i]=round(df[,i],1)
 }
 ```
 
@@ -268,8 +268,132 @@ print(summary(blk))
 ```
 ```{r}
 df$tcp = as.factor(df$tcp)
+df$moisture = round(df$moisture,1)
+```
+
+```{r}
+df = df[,c(4:13,16)]
 ```
 
 
 
+```{r}
+library(rpart)
+#dtree
+set.seed(1)
+all.acc = numeric(0)
+for(i in 1:folds){
+  tree = rpart(tcp~.,df[blk != i,],method="class")
+  pred = predict(tree,df[blk==i,],type="class")
+  confMat = table(pred,df$tcp[blk==i])
+  acc = (confMat[1,1]+confMat[2,2]+confMat[3,3]+confMat[4,4])/sum(confMat)
+  all.acc = rbind(all.acc,acc)
+}
 
+print(mean(all.acc))
+table_accuracy[1,1] = mean(all.acc)
+
+```
+I re-formatted the label/target field and went from a binary (good/bad) grading 
+and could not figure out why the accuracy was so low (0.003) and then looked into
+what the accuracy was calculating...
+```{r}
+confMat
+```
+
+```{r}
+# naive Bayes (gaussian data)
+library(e1071)
+set.seed(1)
+
+all.acc = numeric(0)
+for(i in 1:folds){
+  model = naiveBayes(tcp~.,df[blk != i,],method="class")
+  pred = predict(model,df[blk==i,],type="class")
+  confMat = table(pred,df$tcp[blk==i])
+  acc = (confMat[1,1]+confMat[2,2]+confMat[3,3]+confMat[4,4])/sum(confMat)
+  all.acc = rbind(all.acc,acc)
+}
+
+print(mean(all.acc))
+table_accuracy[2,1] = mean(all.acc)
+```
+
+```{r}
+#svm linear
+set.seed(1)
+
+all.acc = numeric(0)
+for(i in 1:folds){
+  model = svm(tcp~.,df[blk != i,],kernel="linear",type="C")
+  pred = predict(model,df[blk==i,],type="class")
+  confMat = table(pred,df$tcp[blk==i])
+  acc = (confMat[1,1]+confMat[2,2]+confMat[3,3]+confMat[4,4])/sum(confMat)
+  all.acc = rbind(all.acc,acc)
+}
+
+print(mean(all.acc))
+table_accuracy[3,1] = mean(all.acc)
+```
+
+```{r}
+#svm poly
+set.seed(1)
+
+all.acc = numeric(0)
+for(i in 1:folds){
+  model = svm(tcp~.,df[blk != i,],kernel="polynomial",type="C")
+  pred = predict(model,df[blk==i,],type="class")
+  confMat = table(pred,df$tcp[blk==i])
+  acc = (confMat[1,1]+confMat[2,2]+confMat[3,3]+confMat[4,4])/sum(confMat)
+  all.acc = rbind(all.acc,acc)
+}
+
+print(mean(all.acc))
+table_accuracy[4,1] = mean(all.acc)
+```
+
+```
+#ann
+library(nnet)
+set.seed(1)
+
+all.acc = numeric(0)
+for(i in 1:folds){
+  model = nnet(tcp~.,df[blk != i,], size = 5, trace=FALSE, wgts=.05)
+  pred = predict(model, df[blk==i,])
+  confMat = table(pred,df$tcp[blk==i])
+  acc = (confMat[1,1])/sum(confMat)
+  all.acc = rbind(all.acc,acc)
+}
+print(mean(all.acc))
+table_accuracy[5,1] = mean(all.acc)
+```
+
+
+```{r}
+library (caret)
+trControl <- trainControl(method  = "cv", number  = 10)
+```
+
+```{r}
+knn = df[,]
+```
+
+```{r warning=FALSE}
+model <- train(tcp ~ .,
+             method     = "knn",
+             tuneGrid   = expand.grid(k = 1:10),
+             trControl  = trControl,
+             data       = knn)
+```
+
+```{r}
+acc = mean(model$results$Accuracy)
+table_accuracy[6,1] = acc
+```
+
+```{r}
+tab = round(table_accuracy,4)
+tab
+```
