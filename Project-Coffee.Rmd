@@ -56,6 +56,7 @@ coffee = na.omit(coffee)
 #view(coffee)
 ```
 
+
 ```{r}
 coffee[grep("lbs",coffee$bag_weight),]
 ```
@@ -208,14 +209,6 @@ for(i in 1:894){
 coffee$tcp = round(coffee$tcp,0)
 ```
 
-For analysis
-```{r warning=FALSE}
-df = coffee[,c(9:22,25,29)]
-for(i in 4 : 13){
-  df[,i]=round(df[,i],1)
-}
-```
-
 Accuracy table for comparison between models
 ```{r}
 table_accuracy = matrix(nrow=6,ncol=1)
@@ -228,28 +221,27 @@ Set seed so analysis is repeatable
 set.seed(1)
 ```
 
-Simple k-fold cross validation(cv) function
-```
-cv = function(data,k){
-  n = nrow(data)
-  folds = k
-  tail = n%/%folds
-  
-  set.seed(1)
-  
-  rnd = runif(n)
-  rank = rank(rnd)
-  
-  #block/chunck from cv is blk
-  blk = (rank-1)%/%tail+1
-  blk = as.factor(blk)
-  
-  #to see formation of folds 
-  print(summary(blk))
+For analysis
+```{r warning=FALSE}
+df = coffee[,c(9:22,25,29)]
+for(i in 4 : 13){
+  df[,i]=round(df[,i],2)
 }
+#view(df)
 ```
 
+
 ```{r}
+df$processing_method= as.factor(df$processing_method)
+df$variety = as.factor(df$variety)
+df = df[,c(1:16)]
+#view(df)
+```
+
+
+Simple k-fold cross validation(cv) 
+```{r}
+set.seed(1)
 n = nrow(df)
 folds = 10
 tail = n%/%folds
@@ -267,14 +259,10 @@ blk = as.factor(blk)
 print(summary(blk))
 ```
 ```{r}
+#df$variety = as.numeric(df$variety)
 df$tcp = as.factor(df$tcp)
 df$moisture = round(df$moisture,1)
 ```
-
-```{r}
-df = df[,c(4:13,16)]
-```
-
 
 
 ```{r}
@@ -319,13 +307,15 @@ print(mean(all.acc))
 table_accuracy[2,1] = mean(all.acc)
 ```
 
+
 ```{r}
 #svm linear
+
 set.seed(1)
 
 all.acc = numeric(0)
 for(i in 1:folds){
-  model = svm(tcp~.,df[blk != i,],kernel="linear",type="C")
+  model = svm(tcp~. ,df[blk != i,],kernel="linear",type="C")
   pred = predict(model,df[blk==i,],type="class")
   confMat = table(pred,df$tcp[blk==i])
   acc = (confMat[1,1]+confMat[2,2]+confMat[3,3]+confMat[4,4])/sum(confMat)
@@ -353,6 +343,11 @@ print(mean(all.acc))
 table_accuracy[4,1] = mean(all.acc)
 ```
 
+```{r}
+df$tcp = round(as.numeric(df$tcp),0)
+```
+
+
 ```{r warning=FALSE}
 df$tcp = as.factor(df$tcp)
 #ann
@@ -361,7 +356,7 @@ set.seed(1)
 
 all.acc = numeric(0)
 for(i in 1:folds){
-  model = nnet(tcp~.,df[blk != i,], size = 5, trace=FALSE, wgts=.05)
+  model = nnet(tcp~.,df[blk != i,], size = 11, trace=FALSE, rang=.06, decay=.006,maxit=500)
   pred = predict(model, df[blk==i,],type="class")
   confMat = table(factor(pred,levels=1:4),factor(df$tcp[blk==i],levels=1:4))
   acc = (confMat[1,1]+confMat[2,2]+confMat[3,3]+confMat[4,4])/sum(confMat)
@@ -378,7 +373,7 @@ is the work around to resolve this issue.
 ```{r}
 set.seed(1)
 i=1
-  model = nnet(tcp~.,df[blk != i,], size = 5, trace=FALSE, wgts=.05)
+  model = nnet(tcp~.,df[blk != i,], size = 10, trace=FALSE, wgts=.05)
   pred = predict(model, df[blk==i,],type="class")
   confMat = table(pred,df$tcp[blk==i])
   confMat
@@ -387,7 +382,7 @@ i=1
 ```{r}
 set.seed(1)
 i=1
-  model = nnet(tcp~.,df[blk != i,], size = 5, trace=FALSE, wgts=.05)
+  model = nnet(tcp~.,df[blk != i,], size = 10, trace=FALSE, wgts=.05)
   pred = predict(model, df[blk==i,],type="class")
   confMat = table(factor(pred,levels=1:4),factor(df$tcp[blk==i],levels=1:4))
   confMat
