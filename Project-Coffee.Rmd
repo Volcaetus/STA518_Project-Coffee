@@ -290,6 +290,13 @@ confMat
 ```
 
 ```{r}
+rpart.plot::rpart.plot(tree)
+```
+
+From this plot, I may need to re-evaluate the buckets for the label/target column.
+
+
+```{r}
 # naive Bayes (gaussian data)
 library(e1071)
 set.seed(1)
@@ -325,6 +332,12 @@ for(i in 1:folds){
 print(mean(all.acc))
 table_accuracy[3,1] = mean(all.acc)
 ```
+
+```{r}
+ggplot(df,aes(x=clean_cup,y=uniformity,color=tcp))+geom_point()
+  #+ facet_wrap(~processing_method,scales = "free")
+```
+
 
 ```{r}
 #svm poly
@@ -365,6 +378,12 @@ for(i in 1:folds){
 print(mean(all.acc))
 table_accuracy[5,1] = mean(all.acc)
 ```
+
+```{r}
+library("NeuralNetTools")
+plotnet(model,circle_cex=5,cex_val=.4,max_sp=TRUE,alpha_val=.25,skip=TRUE)
+```
+
 There was an (un)interesting issue with NN table, as it was dropping the
 first two rows as it was not forward feeding into those nodes. The following
 is the work around to resolve this issue.
@@ -406,6 +425,11 @@ model <- train(tcp ~ .,
              trControl  = trControl,
              data       = knn)
 ```
+
+```{r}
+plot(model)
+```
+
 
 ```{r}
 acc = mean(model$results$Accuracy)
