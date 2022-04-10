@@ -2,7 +2,7 @@
 title: "Project"
 author: "SeanJ- Volcaetus"
 date: "4/3/2022"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +14,7 @@ From TidyTuesday
 URL:https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-07-07
 
 
-```{r }
+```{r include=FALSE}
 coffee_ratings <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-07/coffee_ratings.csv')
 
 ```
@@ -56,7 +56,7 @@ coffee = na.omit(coffee)
 #view(coffee)
 ```
 
-
+#Changing Msss to all Imperial Units of Measurements#
 ```{r}
 coffee[grep("lbs",coffee$bag_weight),]
 ```
@@ -68,7 +68,6 @@ coffee = separate(data = coffee, col = bag_weight, into = c("weight", "type"), s
 ```{r}
 coffee$weight = as.numeric(coffee$weight)
 ```
-
 
 ```{r}
 for(i in 1:length(coffee)){
@@ -84,6 +83,7 @@ coffee = coffee%>%
   select(-type)
 ```
 
+#Changing Length to all Imperial Units of Measurements#
 ```{r}
 coffee = coffee%>%
     rename(avg_altitude=altitude_mean_meters)
@@ -93,7 +93,7 @@ coffee = coffee%>%
 coffee$avg_altitude = round(coffee$avg_altitude * 3.28084,0)
 ```
 
-
+#Altering androws with years with form Year1/Year2 to the intial year (Year1)#
 ```{r}
 coffee$harvest_year = substr(coffee$harvest_year,1,4)
 coffee$harvest_year = as.numeric(coffee$harvest_year)
@@ -133,13 +133,13 @@ Condense the data
 c.v1 = c%>%pivot_longer(
   cols = !c(species, country_of_origin,variety,processing_method,color),
   names_to = "Variables",
-  values_to = "Counts")
+  values_to = "Values")
 c.v1
 ```
 
 Plot the data to see overall behavior 
 ```{r}
-ggplot(c.v1,aes(x=species,y=Counts,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
+ggplot(c.v1,aes(x=species,y=Values,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
 ```
 Filter out the items that have known outliers
 ```{r}
@@ -149,27 +149,27 @@ c.v2 = c.v1 %>%
 
 
 ```{r}
-ggplot(c.v2,aes(x=species,y=Counts,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
+ggplot(c.v2,aes(x=species,y=Values,color=color))+geom_boxplot()+facet_wrap(~Variables,scales = "free")
 ```
 How are the cup points distributed and where the weight it is at
 ```{r}
 c.v2 %>%
   filter(Variables == 'total_cup_points')%>%
-  ggplot(aes(x=species,y=Counts,color=color))+geom_boxplot()
+  ggplot(aes(x=species,y=Values,color=color))+geom_boxplot()
 
 c.v2 %>%
   filter(Variables == 'total_cup_points')%>%
-  ggplot(aes(x=species,y=Counts,color=color))+geom_violin()
+  ggplot(aes(x=species,y=Values,color=color))+geom_violin()
 ```
 ```{r warning=FALSE}
 c.v2 %>%
   filter(Variables == 'total_cup_points')%>%
-  ggplot(aes(x=processing_method,y=Counts,color=color))+geom_boxplot()+
+  ggplot(aes(x=processing_method,y=Values,color=color))+geom_boxplot()+
     facet_wrap(~processing_method,scales = "free")
 
 c.v2 %>%
   filter(Variables == 'total_cup_points')%>%
-  ggplot(aes(x=processing_method,y=Counts,color=color))+geom_violin()+
+  ggplot(aes(x=processing_method,y=Values,color=color))+geom_violin()+
     facet_wrap(~processing_method,scales = "free")
 ```
 See the data make-up in a different view
@@ -177,12 +177,24 @@ See the data make-up in a different view
 library(formattable)
 ```
 
+#Function for Calculating Frequency#
 ```{r}
-#want to make this cleaner
-c.v1 %>%
-  group_by(Variables,Counts) %>%
+freqq = function(df,col_i,col_j){
+  a = df %>%
+  group_by({{col_i}},{{col_j}}) %>%
   summarise(count = n()) %>%
   mutate(freq = formattable::percent(count / sum(count)))
+  return(a)
+}
+```
+
+#Framework of the Individual Variables#
+```{r}
+freqq(c.v1,country_of_origin,Values)
+```
+
+```{r}
+freqq(c.v1,Variables,Values)
 ```
 
 Format the label (total_cup_points) to be categorical
@@ -389,7 +401,7 @@ first two rows as it was not forward feeding into those nodes. The following
 is the work around to resolve this issue.
 
 #Before#
-```{r}
+```{r warning=FALSE}
 set.seed(1)
 i=1
   model = nnet(tcp~.,df[blk != i,], size = 10, trace=FALSE, wgts=.05)
@@ -398,7 +410,7 @@ i=1
   confMat
 ```
 #After#
-```{r}
+```{r warning=FALSE}
 set.seed(1)
 i=1
   model = nnet(tcp~.,df[blk != i,], size = 10, trace=FALSE, wgts=.05)
@@ -431,6 +443,8 @@ plot(model)
 ```
 
 
+
+
 ```{r}
 acc = mean(model$results$Accuracy)
 table_accuracy[6,1] = acc
@@ -440,3 +454,92 @@ table_accuracy[6,1] = acc
 tab = round(table_accuracy,4)
 tab
 ```
+
+##Easiest Example of ##
+```{r}
+rpart.plot::rpart.plot(tree)
+```
+
+
+##Interaction Visuals##
+```{r warning=FALSE}
+library(plotly)
+fig = coffee %>%
+    plot_ly(
+    x = ~total_cup_points, 
+    y = ~cupper_points, 
+    color = ~color,
+    colors = "Accent",
+    #frame = ~frame, 
+    text = ~variety, 
+    hoverinfo = "text",
+    type = 'scatter',
+    mode = 'markers'
+    #showlegend=FALSE
+    )
+fig
+
+```
+
+```{r warning=FALSE}
+fig = coffee %>%
+    plot_ly(
+    x = ~total_cup_points, 
+    y = ~cupper_points, 
+    split = ~processing_method,
+    color = ~color,
+    colors = "Accent",
+    #frame = ~frame, 
+    text = ~variety, 
+    hoverinfo = "text",
+    type = 'scatter',
+    mode = 'markers'
+    #showlegend=FALSE
+    )
+fig
+
+```
+
+```{r warning=FALSE}
+fig = coffee %>%
+    plot_ly(
+    x = ~total_cup_points, 
+    y = ~flavor, 
+    split = ~color,
+    color = ~processing_method,
+    colors = "Accent",
+    #frame = ~frame, 
+    text = ~variety, 
+    hoverinfo = "text",
+    type = 'scatter',
+    mode = 'markers'
+    #showlegend=FALSE
+    )
+fig
+
+```
+
+
+
+
+
+
+```{r warning=FALSE}
+fig = coffee %>%
+    plot_ly(
+    x = ~total_cup_points, 
+    y = ~clean_cup, 
+    split = ~color,
+    color = ~processing_method,
+    colors = "Accent",
+    #frame = ~frame, 
+    text = ~variety, 
+    hoverinfo = "text",
+    type = 'scatter',
+    mode = 'markers'
+    #showlegend=FALSE
+    )
+fig
+
+```
+
