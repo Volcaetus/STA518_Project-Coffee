@@ -38,6 +38,9 @@ Next, nee to check what is happening in the rest of the data set, the character 
 #type of data, col = 2, type of function applied
 apply(X=is.na(coffee_ratings), MARGIN = 2, FUN = sum)
 ```
+I had to use a quick google search to figure if margin had to be 1 or 2.
+Site: https://www.guru99.com/r-apply-sapply-tapply.html
+
 There a quite a few missing values and many columns have many.
 I will be just removing some of the columns with too many missing values, for instance lot_number and farm_name.
 Additionally, I there will be removal of columns that do not heavily influence the goals of this project.
@@ -63,6 +66,7 @@ coffee = na.omit(coffee)
 #Changing Mass to all Imperial Units of Measurements#
 ```{r}
 #selecting only items with lbs pattern within column to see how many
+#Nathan F reminded me to the use of grep
 coffee[grep("lbs",coffee$bag_weight),]
 ```
 
@@ -214,6 +218,38 @@ c.v2 %>%
   ggplot(aes(x=processing_method,y=Values,color=color))+geom_violin()+
     facet_wrap(~processing_method,scales = "free")
 ```
+#Heatmap of Correlations#
+```{r warning=FALSE}
+library(reshape)
+c = c[,c(1,6:16)]
+cormat = cor(c)
+melted = melt(cormat,varnames = c("ParameterX", "ParameterY"))
+```
+
+#Heatmap#
+```{r}
+ggplot(data = melted, aes(x=ParameterX, y=ParameterY, fill=value)) +
+  geom_tile(color = "white")+
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+   midpoint = 0, limit = c(-1,1), space = "Lab", 
+   name="Pearson \n Correlation") + 
+  labs(x = "", y = "")+
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, size = 9, hjust = 1))+
+ coord_fixed()
+  
+``` 
+
+This took quite a bit of using ggplot2 to aid in creating this visual. I used quite a few
+site for reference.
+~1
+https://ggplot2.tidyverse.org/reference/geom_tile.html
+~2
+https://r-charts.com/correlation/heat-map-ggplot2/
+~3
+https://stackoverflow.com/questions/1330989/rotating-and-spacing-axis-labels-in-ggplot2
+
+
 #See the data make-up in a numerical summary#
 ```{r}
 library(formattable)
